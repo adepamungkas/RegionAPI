@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RegionAPI.Repositories
 {
-    interface IRepository<TModel>
+  public  interface IRepository<TModel>
     {
         IEnumerable<TModel> GetAll();
         TModel GetSingle(int id);

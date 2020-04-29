@@ -13,6 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using RegionAPI.Models;
+using RegionAPI.Repositories;
 
 namespace RegionAPI
 {
@@ -29,11 +31,13 @@ namespace RegionAPI
         public void ConfigureServices(IServiceCollection services)
         {
              var configurationSection = Configuration.GetConnectionString("DefaultConnection");
-           // var configurationSection = Configuration.GetSection("ConnectionStrings:DefaultConnection");
+          
             services.AddDbContext<DataBaseContext>(options => options.UseSqlServer(configurationSection));
             //   services.AddMvc();
+            services.AddTransient<IRepository<MyModel>, ExampleRepository>();
+            services.AddTransient<IRepository<CountryModel>, CountryRepository>();
+          
 
-           
             services.AddControllers();
             services.AddAutoMapper(typeof(Startup));
             // Register the Swagger generator, defining 1 or more Swagger documents

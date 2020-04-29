@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RegionAPI;
 using RegionAPI.Models;
+using RegionAPI.Repositories;
+using RegionAPI.ViewModels;
 
 namespace RegionAPI.Controllers
 {
@@ -14,97 +18,167 @@ namespace RegionAPI.Controllers
     [ApiController]
     public class CountryModelsController : ControllerBase
     {
-        private readonly DataBaseContext _context;
-
-        public CountryModelsController(DataBaseContext context)
+        private readonly IRepository<CountryModel> _countryRepository;
+        private readonly IMapper _mapper;
+        public CountryModelsController(IRepository<CountryModel> countryRepository, IMapper mapper)
         {
-            _context = context;
+            _countryRepository = countryRepository;
+            _mapper = mapper;
         }
 
-        // GET: api/CountryModels
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<CountryModel>>> GetCountries()
+        [HttpGet("", Name = "GetAll")]
+        public IActionResult Get()
         {
-            return await _context.Countries.ToListAsync();
-        }
-
-        // GET: api/CountryModels/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<CountryModel>> GetCountryModel(long id)
-        {
-            var countryModel = await _context.Countries.FindAsync(id);
-
-            if (countryModel == null)
-            {
-                return NotFound();
-            }
-
-            return countryModel;
-        }
-
-        // PUT: api/CountryModels/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCountryModel(long id, CountryModel countryModel)
-        {
-            if (id != countryModel.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(countryModel).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                return Ok(_countryRepository.GetAll().Select(x =>
+                {
+                       return _mapper.Map<CountryViewModel>(x);
+                }));
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception exception)
             {
-                if (!CountryModelExists(id))
+                //logg exception or do anything with it
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
+        }
+
+       
+
+        // GET api/values/5
+        [HttpGet("{id}", Name = "GetSingle")]
+        public IActionResult Get(int id)
+        {
+            try
+            {
+                CountryModel countryModel = _countryRepository.GetSingle(id);
+
+                if (countryModel == null)
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                return Ok(_mapper.Map<CountryViewModel>(countryModel));
             }
-
-            return NoContent();
-        }
-
-        // POST: api/CountryModels
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPost]
-        public async Task<ActionResult<CountryModel>> PostCountryModel(CountryModel countryModel)
-        {
-            _context.Countries.Add(countryModel);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetCountryModel", new { id = countryModel.Id }, countryModel);
-        }
-
-        // DELETE: api/CountryModels/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<CountryModel>> DeleteCountryModel(long id)
-        {
-            var countryModel = await _context.Countries.FindAsync(id);
-            if (countryModel == null)
+            catch (Exception exception)
             {
-                return NotFound();
+                //Do something with the exception
+                return StatusCode((int)HttpStatusCode.InternalServerError);
             }
-
-            _context.Countries.Remove(countryModel);
-            await _context.SaveChangesAsync();
-
-            return countryModel;
         }
 
-        private bool CountryModelExists(long id)
+       
+        // PUT api/values/5
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody]CountryViewModel viewModel)
         {
-            return _context.Countries.Any(e => e.Id == id);
+            try
+            {
+                if (viewModel == null)
+                {
+                    return BadRequest();
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                CountryModel singleById = _countryRepository.GetSingle(id);
+
+                if (singleById == null)
+                {
+                    return NotFound();
+                }
+
+                singleById.Name = viewModel.Name;
+
+                _countryRepository.Update(singleById);
+                int save = _countryRepository.Save();
+
+                if (save > 0)
+                {
+                    return Ok(_mapper.Map<CountryViewModel>(singleById));
+                }
+
+                return BadRequest();
+            }
+            catch (Exception exception)
+            {
+                //Do something with the exception
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
         }
-    }
+
+
+       
+        // POST api/values
+        [HttpPost]
+        public IActionResult Post([FromBody]CountryViewModel viewModel)
+        {
+            try
+            {
+                if (viewModel == null)
+                {
+                    return BadRequest();
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                CountryModel item = _mapper.Map<CountryModel>(viewModel);
+
+                _countryRepository.Add(item);
+                int save = _countryRepository.Save();
+
+                if (save > 0)
+                {
+                    return CreatedAtRoute("GetSingle", new { controller = "CountryModels", id = item.Id }, item);
+                }
+
+                return BadRequest();
+            }
+            catch (Exception exception)
+            {
+                //Do something with the exception
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
+        }
+
+       
+
+        // DELETE api/values/5
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            try
+            {
+                CountryModel singleById = _countryRepository.GetSingle(id);
+
+                if (singleById == null)
+                {
+                    return NotFound();
+                }
+
+                _countryRepository.Delete(singleById);
+                int save = _countryRepository.Save();
+
+                if (save > 0)
+                {
+                    return NoContent();
+                }
+
+                return BadRequest();
+            }
+            catch (Exception exception)
+            {
+                //Do something with the exception
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
+        }
+    
+
+}
 }
