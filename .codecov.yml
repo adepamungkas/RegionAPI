@@ -1,0 +1,3 @@
+ignore:
+  - "RegionAPI/Migrations"
+  - "RegionAPI/Startup.cs"
