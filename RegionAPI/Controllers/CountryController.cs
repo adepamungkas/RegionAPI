@@ -16,11 +16,11 @@ namespace RegionAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CountryModelsController : ControllerBase
+    public class CountryController : ControllerBase
     {
         private readonly IRepository<CountryModel> _countryRepository;
         private readonly IMapper _mapper;
-        public CountryModelsController(IRepository<CountryModel> countryRepository, IMapper mapper)
+        public CountryController(IRepository<CountryModel> countryRepository, IMapper mapper)
         {
             _countryRepository = countryRepository;
             _mapper = mapper;
