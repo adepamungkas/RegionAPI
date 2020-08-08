@@ -58,5 +58,18 @@ namespace RegionApiTest.Controllers
             int statusCode = this.GetStatusCode(response);
             Assert.Equal((int)HttpStatusCode.OK, statusCode);
         }
+
+        [Fact]
+        public void Get_return_InternalServerError()
+        {
+            Mock<IRepository<CountryModel>> repositoryMock = new Mock<IRepository<CountryModel>>();
+            repositoryMock.Setup(s => s.GetAll()).Throws(new Exception());
+
+            Mock<IMapper> imapperMock = new Mock<IMapper>();
+
+            IActionResult response = GetController(repositoryMock, imapperMock).Get();
+            int statusCode = this.GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        }
     }
 }
