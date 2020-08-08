@@ -23,6 +23,6 @@ script:
     - dotnet test RegionApiTest/RegionApiTest.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=lcov
 
 after_success:
-    - curl -s https://codecov.io/bash > codecov
+    - bash <(curl -s https://codecov.io/bash)
     - chmod +x codecov
     - ./codecov -f "/home/travis/build/danliris/RegionAPI/RegionApiTest/coverage.info"
